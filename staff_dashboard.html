@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks"></i> Pending Complaints ({{ complaints|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if complaints %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                            <tr id="complaint-{{ complaint.id }}">
+                                <td><strong>#{{ complaint.id }}</strong></td>
+                                <td>{{ complaint.user.username }}</td>
+                                <td>{{ complaint.title[:50] }}{% if complaint.title|length > 50 %}...{% endif %}</td>
+                                <td><span class="badge bg-info">{{ complaint.category }}</span></td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if complaint.priority=='High' else 'warning' if complaint.priority=='Medium' else 'success' }}">
+                                        {{ complaint.priority }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span id="status-{{ complaint.id }}" class="badge bg-{{ 'warning' if complaint.status=='Open' else 'info' if complaint.status=='In Progress' else 'success' }}">
+                                        {{ complaint.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if complaint.status == 'Open' %}
+                                    <button class="btn btn-sm btn-outline-primary assign-btn" data-id="{{ complaint.id }}">
+                                        <i class="fas fa-hand-point-right"></i> Assign
+                                    </button>
+                                    {% elif complaint.status == 'In Progress' %}
+                                    <button class="btn btn-sm btn-success resolve-btn" data-id="{{ complaint.id }}">
+                                        <i class="fas fa-check"></i> Resolve
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>🎉 No pending complaints!</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Assign complaint
+    document.querySelectorAll('.assign-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const complaintId = this.dataset.id;
+            fetch(`/staff/assign/${complaintId}`, {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector(`#status-${complaintId}`).textContent = 'In Progress';
+                        document.querySelector(`#status-${complaintId}`).className = 'badge bg-info';
+                        this.style.display = 'none';
+                        const resolveBtn = document.createElement('button');
+                        resolveBtn.className = 'btn btn-sm btn-success resolve-btn';
+                        resolveBtn.dataset.id = complaintId;
+                        resolveBtn.innerHTML = '<i class="fas fa-check"></i> Resolve';
+                        this.parentNode.appendChild(resolveBtn);
+                        resolveBtn.addEventListener('click', function() {
+                            if (confirm('Mark this complaint as resolved?')) {
+                                fetch(`/staff/resolve/${complaintId}`, {method: 'POST'})
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            document.querySelector(`#status-${complaintId}`).textContent = 'Resolved';
+                                            document.querySelector(`#status-${complaintId}`).className = 'badge bg-success';
+                                            this.style.display = 'none';
+                                            resolveBtn.style.display = 'none';
+                                        }
+                                    });
+                            }
+                        });
+                    }
+                });
+        });
+    });
+
+    // Resolve complaint (existing buttons)
+    document.querySelectorAll('.resolve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const complaintId = this.dataset.id;
+            if (confirm('Mark this complaint as resolved?')) {
+                fetch(`/staff/resolve/${complaintId}`, {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelector(`#status-${complaintId}`).textContent = 'Resolved';
+                            document.querySelector(`#status-${complaintId}`).className = 'badge bg-success';
+                            this.style.display = 'none';
+                        }
+                    });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
