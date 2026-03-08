@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> My Complaints ({{ complaints|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if complaints %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                            <tr>
+                                <td><strong>#{{ complaint.id }}</strong></td>
+                                <td>{{ complaint.title }}</td>
+                                <td><span class="badge bg-info">{{ complaint.category }}</span></td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if complaint.priority=='High' else 'warning' if complaint.priority=='Medium' else 'success' }}">
+                                        {{ complaint.priority }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if complaint.status=='Resolved' else 'info' if complaint.status=='In Progress' else 'warning' }}">
+                                        {{ complaint.status }}
+                                    </span>
+                                </td>
+                                <td>{{ complaint.created_at.strftime('%d/%m %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>No complaints yet</h5>
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#submitModal">
+                        <i class="fas fa-plus"></i> Submit First Complaint
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-plus"></i> New Complaint</h6>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#submitModal">
+                    <i class="fas fa-plus"></i> Submit Complaint
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Complaint Modal -->
+<div class="modal fade" id="submitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit New Complaint</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('submit_complaint') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" name="title" class="form-control" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category *</label>
+                        <select name="category" class="form-select" required>
+                            <option value="">Select Category</option>
+                            <option value="Hostel">Hostel</option>
+                            <option value="Library">Library</option>
+                            <option value="Computer Lab">Computer Lab</option>
+                            <option value="Fees">Fees</option>
+                            <option value="WiFi/Network">WiFi/Network</option>
+                            <option value="Exam">Exam</option>
+                            <option value="Canteen">Canteen</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority *</label>
+                        <select name="priority" class="form-select" required>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        <textarea name="description" class="form-control" rows="4" required maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Complaint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
